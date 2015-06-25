@@ -5,6 +5,7 @@
 typedef void *Proposition;
 
 Proposition proposition_new(void);//creates an empty proposition
+Proposition proposition_make(char);//sets value in new prop
 void proposition_delete(Proposition);//also deletes children!
 
 Proposition proposition_set_value(Proposition,char);//for now all props are 1 char
@@ -15,6 +16,7 @@ char proposition_get_value(const Proposition);
 Proposition proposition_get_left(const Proposition);
 Proposition proposition_get_right(const Proposition);
 
-int proposition_print(const Proposition, char *,size_t);//buffer & size
+int proposition_format(const Proposition, char *,size_t);//buffer & size
+Proposition proposition_parse(const char *);
 
 #endif // PROPOSITION_H

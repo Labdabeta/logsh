@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <ctype.h>
 #include "proposition.h"
 
 typedef struct PropositionTAG {
@@ -11,6 +12,14 @@ Proposition proposition_new(void)
 {
     PropositionHANDLE ret = malloc(sizeof(struct PropositionTAG));
     ret->val = 0;
+    ret->left = ret->right = 0;
+    return ret;
+}
+
+Proposition proposition_make(char ch)
+{
+    PropositionHANDLE ret = malloc(sizeof(struct PropositionTAG));
+    ret->val = ch;
     ret->left = ret->right = 0;
     return ret;
 }
@@ -70,21 +79,66 @@ Proposition proposition_get_right(const Proposition me)
     return this->right;
 }
      
-int proposition_print(const Proposition me, char *buffer, size_t size)
+int proposition_format(const Proposition me, char *buffer, size_t size)
 {
     int r,l;
     const PropositionHANDLE this = me;
     if (!this || !buffer || !size)return 0;
+    //TODO: be more stringent with parentheses
     *buffer = '(';
-    l=proposition_print(this->left,buffer+1,size-1);
+    l=proposition_format(this->left,buffer+1,size-1);
     if (size-l > 1)
         buffer[l+1]=this->val;
     else
         return l+1;
-    r=proposition_print(this->right,buffer+(l+2),size-l-2);
+    r=proposition_format(this->right,buffer+(l+2),size-l-2);
     if (size-l-r > 2)
         buffer[l+r+2]=')';
     else
         return l+r+2;
     return l+r+3;
 }
+
+Proposition proposition_parse(const char *str)
+{
+    Proposition left=NULL,right=NULL,ret;
+    char val = 0;
+    while (*str && (!left || !right || !val)) {
+        if (isalpha(*str)) {
+            if (!left) {
+                left = proposition_make(*str);
+            } else if (!val) {
+                proposition_delete(left);
+                return NULL;
+            } else {
+                right = proposition_make(*str);
+            }
+        } else if (*str == '(') {
+            if (!left) {
+                left = proposition_parse(str+1);
+            } else if (!val) {
+                proposition_delete(left);
+                return NULL;
+            } else {
+                right = proposition_parse(str+1);
+            }
+        } else {
+            if (!left) {
+                return NULL;
+            } else if (!val) {
+                val = *str;
+            } else {
+                return NULL;
+            }
+        }
+        str++;
+    }
+    ret = proposition_make(val);
+    proposition_set_left(ret,left);
+    proposition_set_right(ret,right);
+    return ret;
+}
+
+
+
+
