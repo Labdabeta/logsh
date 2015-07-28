@@ -3,13 +3,25 @@
 
 int main(int argc, char *argv[])
 {
-    Proposition y = proposition_parse("x&(y|z)");
+    Proposition p = 
+        proposition_set_left(
+                proposition_set_right(
+                    proposition_make('&'),
+                    proposition_make('c')),
+                proposition_set_left(
+                    proposition_set_right(
+                        proposition_make('|'),
+                        proposition_make('b')),
+                    proposition_set_right(
+                        proposition_make('!'),
+                        proposition_make('a'))));
+
 
 
     char buffer[256]={0};
-    proposition_format(y,buffer,256);
+    proposition_format(p,buffer,256);
     printf("%s\n",buffer);
 
-    proposition_delete(y);
+    proposition_delete(p);
     return 0;
 }

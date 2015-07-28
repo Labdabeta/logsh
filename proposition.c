@@ -78,25 +78,68 @@ Proposition proposition_get_right(const Proposition me)
     if (!this)return 0;
     return this->right;
 }
+
+int precedence(char a, char b) //compare with zero for a ? b
+{
+    int aprec,bprec;
+    switch (a) {
+        case '=':aprec = 1;break;
+        case '>':case '-':aprec = 2;break;
+        case '|':aprec = 3;break;
+        case '&':aprec = 4;break;
+        case '!':aprec = 5;break;
+        default:aprec = 10;
+    }
+    switch (b) {
+        case '=':bprec = 1;break;
+        case '>':case '-':bprec = 2;break;
+        case '|':bprec = 3;break;
+        case '&':bprec = 4;break;
+        case '!':bprec = 5;break;
+        default:bprec = 10;
+    }
+    return aprec-bprec;
+}
      
 int proposition_format(const Proposition me, char *buffer, size_t size)
 {
-    int r,l;
+    char *end;
     const PropositionHANDLE this = me;
     if (!this || !buffer || !size)return 0;
-    //TODO: be more stringent with parentheses
-    *buffer = '(';
-    l=proposition_format(this->left,buffer+1,size-1);
-    if (size-l > 1)
-        buffer[l+1]=this->val;
-    else
-        return l+1;
-    r=proposition_format(this->right,buffer+(l+2),size-l-2);
-    if (size-l-r > 2)
-        buffer[l+r+2]=')';
-    else
-        return l+r+2;
-    return l+r+3;
+    end = buffer + size;
+
+#define PRINT(X) do {\
+    if (buffer < end) {\
+        *buffer++ = (X);\
+    } else {\
+        *buffer = '\0';\
+        return size;\
+    } } while (0)
+
+    //Print left expression
+    if (this->left && precedence(this->left->val,this->val) < 0) {
+        PRINT('(');
+        buffer += proposition_format(this->left, buffer, end-buffer);
+        PRINT(')');
+    } else {
+        buffer += proposition_format(this->left, buffer, end-buffer);
+    }
+
+    //Print value
+    PRINT(this->val);
+
+    //Print right expression
+    if (this->right && precedence(this->right->val,this->val) < 0) {
+        PRINT('(');
+        buffer += proposition_format(this->right, buffer, end-buffer);
+        PRINT(')');
+    } else {
+        buffer += proposition_format(this->right, buffer, end-buffer);
+    }
+#undef PRINT
+    
+    *buffer = '\0';
+    return buffer + size - end;
 }
 
 Proposition proposition_parse(const char *str)
